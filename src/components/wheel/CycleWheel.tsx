@@ -28,71 +28,66 @@ const SECTORS: { phase: PhaseKey; weight: number }[] = [
   { phase: 'luteal', weight: 11 },
 ];
 
-function ringArc(cx: number, cy: number, r: number, start: number, end: number, thickness: number) {
-  const inner = r - thickness;
+const GAP_DEG = 2.2;
+
+function arcStroke(cx: number, cy: number, r: number, startDeg: number, sweepDeg: number) {
   const path = Skia.Path.Make();
-  const startDeg = (start * 180) / Math.PI;
-  const sweepDeg = ((end - start) * 180) / Math.PI;
   path.addArc({ x: cx - r, y: cy - r, width: r * 2, height: r * 2 }, startDeg, sweepDeg);
-  const innerEndX = cx + inner * Math.cos(end);
-  const innerEndY = cy + inner * Math.sin(end);
-  path.lineTo(innerEndX, innerEndY);
-  path.addArc(
-    { x: cx - inner, y: cy - inner, width: inner * 2, height: inner * 2 },
-    startDeg + sweepDeg,
-    -sweepDeg
-  );
-  path.close();
   return path;
 }
 
 export function CycleWheel({ size, phase, dayOfCycle, cycleLength, progress }: Props) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = size / 2 - 18;
-  const thickness = size * 0.13;
+  const r = size / 2 - 22;
+  const thickness = size * 0.11;
   const totalWeight = SECTORS.reduce((s, x) => s + x.weight, 0);
 
-  let acc = -Math.PI / 2;
+  let accDeg = -90;
   const sectors = SECTORS.map(({ phase: p, weight }) => {
-    const start = acc;
-    const end = acc + (weight / totalWeight) * Math.PI * 2;
-    acc = end;
-    return { phase: p, start, end };
+    const sweep = (weight / totalWeight) * 360;
+    const start = accDeg + GAP_DEG / 2;
+    const span = sweep - GAP_DEG;
+    accDeg += sweep;
+    return { phase: p, start, span };
   });
 
-  const indicatorAngle = -Math.PI / 2 + Math.min(1, Math.max(0, progress)) * Math.PI * 2;
-  const ix = cx + (r - thickness / 2) * Math.cos(indicatorAngle);
-  const iy = cy + (r - thickness / 2) * Math.sin(indicatorAngle);
+  const indicatorAngle = (-90 + Math.min(1, Math.max(0, progress)) * 360) * (Math.PI / 180);
+  const ix = cx + r * Math.cos(indicatorAngle);
+  const iy = cy + r * Math.sin(indicatorAngle);
 
   const pulse = useSharedValue(0);
   useEffect(() => {
     pulse.value = withRepeat(withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.quad) }), -1, true);
   }, [pulse]);
   const glowR = useDerivedValue(() => 14 + pulse.value * 14, [pulse]);
-  const haloR = useDerivedValue(() => 26 + pulse.value * 22, [pulse]);
+  const haloR = useDerivedValue(() => 30 + pulse.value * 24, [pulse]);
 
   const current = phaseColors[phase];
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
+        <Circle cx={cx} cy={cy} r={r} style="stroke" strokeWidth={thickness + 2} color={palette.white} />
+
         {sectors.map((s) => {
           const isActive = s.phase === phase;
           return (
             <Path
               key={s.phase}
-              path={ringArc(cx, cy, r, s.start, s.end, thickness)}
+              path={arcStroke(cx, cy, r, s.start, s.span)}
+              style="stroke"
+              strokeCap="round"
+              strokeWidth={thickness}
               color={isActive ? phaseColors[s.phase].primary : phaseColors[s.phase].soft}
-              opacity={isActive ? 1 : 0.85}>
-              {isActive && <BlurMask blur={1.2} style="solid" />}
-            </Path>
+              opacity={isActive ? 1 : 0.9}
+            />
           );
         })}
 
-        <Circle cx={ix} cy={iy} r={haloR} opacity={0.5}>
-          <RadialGradient c={vec(ix, iy)} r={48} colors={[current.glow, 'rgba(255,255,255,0)']} />
-          <BlurMask blur={20} style="normal" />
+        <Circle cx={ix} cy={iy} r={haloR} opacity={0.45}>
+          <RadialGradient c={vec(ix, iy)} r={56} colors={[current.glow, 'rgba(255,255,255,0)']} />
+          <BlurMask blur={22} style="normal" />
         </Circle>
         <Circle cx={ix} cy={iy} r={glowR} color={current.glow}>
           <BlurMask blur={12} style="normal" />
@@ -102,8 +97,12 @@ export function CycleWheel({ size, phase, dayOfCycle, cycleLength, progress }: P
         </Circle>
         <Circle cx={ix} cy={iy} r={6} color={current.primary} />
 
-        <Circle cx={cx} cy={cy} r={r - thickness - 6}>
-          <RadialGradient c={vec(cx, cy)} r={r - thickness - 6} colors={[palette.white, current.soft]} />
+        <Circle cx={cx} cy={cy} r={r - thickness / 2 - 8}>
+          <RadialGradient
+            c={vec(cx, cy)}
+            r={r - thickness / 2 - 8}
+            colors={[palette.white, current.soft]}
+          />
         </Circle>
       </Canvas>
       <View style={[StyleSheet.absoluteFill, styles.centerLabel]} pointerEvents="none">

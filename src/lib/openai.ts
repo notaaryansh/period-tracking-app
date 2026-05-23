@@ -3,7 +3,7 @@ import type { PhaseKey } from '../theme/colors';
 import type { ZodiacSign } from './horoscope';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
-const MODEL = 'gpt-5.4-mini';
+const MODEL = 'gpt-4o-mini';
 
 function getApiKey(): string | null {
   const extra = (Constants.expoConfig?.extra ?? {}) as { openaiApiKey?: string | null };
@@ -69,14 +69,13 @@ export async function fetchDaily(input: DailyInput): Promise<DailyPayload> {
       },
       body: JSON.stringify({
         model: MODEL,
+        temperature: 0.85,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
         response_format: { type: 'json_object' },
-        reasoning_effort: 'minimal',
-        verbosity: 'low',
-        max_completion_tokens: 400,
+        max_tokens: 400,
       }),
     });
     if (!res.ok) {

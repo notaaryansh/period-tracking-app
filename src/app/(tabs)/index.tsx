@@ -113,6 +113,25 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await load();
+    if (info) {
+      setLoadingDaily(true);
+      const fresh = await getDaily(
+        {
+          date: todayISO(),
+          phase: info.phase,
+          dayOfCycle: info.dayOfCycle,
+          cycleLength: info.cycleLength,
+          recentMoods: moods.slice(0, 5).map((m) => ({ date: m.date, mood: m.mood })),
+          recentNotes: notes.slice(0, 3).map((n) => ({ date: n.date, content: n.content })),
+          sun: signs.sun,
+          moon: signs.moon,
+          rising: signs.rising,
+        },
+        true
+      );
+      setDaily(fresh);
+      setLoadingDaily(false);
+    }
     setRefreshing(false);
   };
 
@@ -122,8 +141,7 @@ export default function HomeScreen() {
   return (
     <>
       <Screen
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.deepRose} />}
-        contentStyle={{ paddingTop: 0 }}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.deepRose} />}>
         <LinearGradient
           colors={[current.soft, palette.cream]}
           style={[StyleSheet.absoluteFill, { height: 360 }]}
@@ -131,9 +149,9 @@ export default function HomeScreen() {
           end={{ x: 0, y: 1 }}
           pointerEvents="none"
         />
-        <View style={{ paddingTop: 8 }}>
-          <Text style={styles.greeting}>Bloom</Text>
-          <Text style={styles.date}>{format(new Date(), 'EEEE, MMM d')}</Text>
+        <View>
+          <Text style={styles.dayLabel}>{format(new Date(), 'EEEE')}</Text>
+          <Text style={styles.dateLabel}>{format(new Date(), 'MMMM d')}</Text>
         </View>
 
         {!info ? (
@@ -232,8 +250,8 @@ function Chip({ label, tint, fg }: { label: string; tint: string; fg: string }) 
 }
 
 const styles = StyleSheet.create({
-  greeting: { fontSize: 34, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
-  date: { fontSize: 14, color: palette.inkSoft, marginTop: 2 },
+  dayLabel: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  dateLabel: { fontSize: 15, color: palette.inkSoft, marginTop: 2, fontWeight: '500' },
   wheelWrap: { alignItems: 'center', marginVertical: 4 },
   chipsRow: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
