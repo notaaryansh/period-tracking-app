@@ -156,7 +156,7 @@ export default function HomeScreen() {
 
             <View style={styles.chipsRow}>
               {openCycle ? (
-                <Chip label="Bleeding now" tint={phaseColors.menstrual.soft} fg={phaseColors.menstrual.primary} />
+                <Chip label="Petal days 🌸" tint={phaseColors.menstrual.soft} fg={phaseColors.menstrual.primary} />
               ) : (
                 <Chip
                   label={`Next period in ${info.daysUntilNextPeriod}d`}

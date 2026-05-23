@@ -31,8 +31,8 @@ export default function TabsLayout() {
         tabBarItemStyle: { justifyContent: 'center', alignItems: 'center', paddingVertical: 0, height: 62 },
         tabBarStyle: {
           position: 'absolute',
-          left: 40,
-          right: 40,
+          left: 18,
+          right: 18,
           bottom: bottomGap,
           height: 62,
           borderRadius: 31,
