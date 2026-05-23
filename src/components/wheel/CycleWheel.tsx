@@ -12,6 +12,7 @@ import {
 } from '@shopify/react-native-skia';
 import { useSharedValue, useDerivedValue, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { palette, phaseColors, type PhaseKey } from '@/theme/colors';
+import { font } from '@/theme/font';
 
 type Props = {
   size: number;
@@ -118,7 +119,7 @@ export function CycleWheel({ size, phase, dayOfCycle, cycleLength, progress }: P
 const styles = StyleSheet.create({
   centerLabel: { alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 34, marginBottom: 4 },
-  dayBig: { fontSize: 36, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
-  phaseLabel: { fontSize: 17, fontWeight: '600', color: palette.deepRose, marginTop: 2 },
-  subtle: { fontSize: 13, color: palette.inkSoft, marginTop: 2 },
+  dayBig: { fontSize: 42, fontFamily: font.black, color: palette.ink, letterSpacing: -1 },
+  phaseLabel: { fontSize: 18, fontFamily: font.italicMedium, color: palette.deepRose, marginTop: 2 },
+  subtle: { fontSize: 13, color: palette.inkSoft, marginTop: 2, fontFamily: font.regular },
 });

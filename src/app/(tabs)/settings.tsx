@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
 import { palette } from '@/theme/colors';
+import { font } from '@/theme/font';
 import { getDb, getSetting, listCycles, setSetting } from '@/lib/db';
 import { averageCycleLength } from '@/lib/cycle';
 import { ZODIAC_SIGNS, SIGN_EMOJI, type ZodiacSign } from '@/lib/horoscope';
@@ -198,8 +199,8 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
-  label: { fontSize: 13, fontWeight: '600', color: palette.inkSoft, marginBottom: 6 },
+  title: { fontSize: 30, fontFamily: font.extrabold, color: palette.ink, letterSpacing: -0.7 },
+  label: { fontSize: 13, fontFamily: font.semibold, color: palette.inkSoft, marginBottom: 6 },
   input: {
     borderRadius: 12,
     backgroundColor: palette.cream,
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   },
   hint: { fontSize: 12, color: palette.inkSoft, marginTop: 6 },
   saveBtn: { backgroundColor: palette.deepRose, paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 14 },
-  saveBtnText: { color: palette.white, fontWeight: '700', fontSize: 14 },
+  saveBtnText: { color: palette.white, fontFamily: font.bold, fontSize: 14 },
   bodyText: { fontSize: 14, color: palette.ink },
   signPicker: {
     flexDirection: 'row',
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
   },
-  signValue: { fontSize: 15, fontWeight: '600', color: palette.ink },
+  signValue: { fontSize: 15, fontFamily: font.semibold, color: palette.ink },
   signChevron: { fontSize: 20, color: palette.inkSoft },
   signGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   signChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: palette.cream },
