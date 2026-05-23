@@ -1,22 +1,26 @@
 {
   "expo": {
-    "name": "period-tracking-app",
+    "name": "Bloom",
     "slug": "period-tracking-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "periodtrackingapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "bloom",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.aaryansh.bloom",
       "icon": "./assets/expo.icon"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFD9DD",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.aaryansh.bloom",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -28,14 +32,20 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFD9DD",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "color": "#FFB7C5"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
