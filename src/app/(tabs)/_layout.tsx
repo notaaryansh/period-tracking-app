@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
-import { Platform, Text, View } from 'react-native';
+import { Platform, Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '@/theme/colors';
+
+const SCREEN_PADDING = 18;
 
 function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
   return (
@@ -19,7 +21,10 @@ function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const bottomGap = Math.max(insets.bottom, 12) + 6;
+  const barWidth = screenWidth - SCREEN_PADDING * 2;
+  const barLeft = SCREEN_PADDING;
 
   return (
     <Tabs
@@ -31,8 +36,8 @@ export default function TabsLayout() {
         tabBarItemStyle: { justifyContent: 'center', alignItems: 'center', paddingVertical: 0, height: 62 },
         tabBarStyle: {
           position: 'absolute',
-          left: 18,
-          right: 18,
+          left: barLeft,
+          width: barWidth,
           bottom: bottomGap,
           height: 62,
           borderRadius: 31,
@@ -40,6 +45,8 @@ export default function TabsLayout() {
           backgroundColor: palette.white,
           paddingTop: 0,
           paddingBottom: 0,
+          paddingHorizontal: 0,
+          marginHorizontal: 0,
           shadowColor: palette.deepRose,
           shadowOpacity: 0.18,
           shadowRadius: 18,

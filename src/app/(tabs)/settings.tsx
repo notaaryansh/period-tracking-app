@@ -8,6 +8,7 @@ import { palette } from '@/theme/colors';
 import { getDb, getSetting, listCycles, setSetting } from '@/lib/db';
 import { averageCycleLength } from '@/lib/cycle';
 import { ZODIAC_SIGNS, SIGN_EMOJI, type ZodiacSign } from '@/lib/horoscope';
+import { debugKeyInfo, testApiKey } from '@/lib/openai';
 
 type SignSlot = 'sun' | 'moon' | 'rising';
 
@@ -158,6 +159,21 @@ export default function SettingsScreen() {
         <Text style={styles.bodyText}>{cycleCount} cycle(s) logged</Text>
         <Pressable style={[styles.saveBtn, { backgroundColor: palette.petalBlush, marginTop: 10 }]} onPress={onWipe}>
           <Text style={[styles.saveBtnText, { color: palette.deepRose }]}>Erase all data</Text>
+        </Pressable>
+      </Card>
+
+      <Card title="OpenAI key debug" subtitle={
+        debugKeyInfo().present
+          ? `Loaded · prefix "${debugKeyInfo().prefix}…" · length ${debugKeyInfo().length}`
+          : 'No key found. Add OPENAI_API_KEY to .env and restart `expo start`.'
+      }>
+        <Pressable
+          style={[styles.saveBtn, { backgroundColor: palette.deepRose }]}
+          onPress={async () => {
+            const r = await testApiKey();
+            Alert.alert(r.ok ? '✅ OpenAI works' : `❌ Status ${r.status || 'error'}`, r.message);
+          }}>
+          <Text style={styles.saveBtnText}>Test OpenAI</Text>
         </Pressable>
       </Card>
 

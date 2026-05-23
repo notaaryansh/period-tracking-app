@@ -7,7 +7,39 @@ const MODEL = 'gpt-4o-mini';
 
 function getApiKey(): string | null {
   const extra = (Constants.expoConfig?.extra ?? {}) as { openaiApiKey?: string | null };
-  return extra.openaiApiKey ?? null;
+  const raw = extra.openaiApiKey;
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function debugKeyInfo(): { present: boolean; prefix: string; length: number } {
+  const k = getApiKey();
+  return {
+    present: !!k,
+    prefix: k ? k.slice(0, 7) : '',
+    length: k?.length ?? 0,
+  };
+}
+
+export async function testApiKey(): Promise<{ ok: boolean; status: number; message: string }> {
+  const key = getApiKey();
+  if (!key) return { ok: false, status: 0, message: 'No API key found in .env (or app needs restart)' };
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'user', content: 'Say "ok"' }],
+        max_tokens: 5,
+      }),
+    });
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, message: text.slice(0, 280) };
+  } catch (err) {
+    return { ok: false, status: 0, message: String(err).slice(0, 280) };
+  }
 }
 
 export type DailyInput = {
