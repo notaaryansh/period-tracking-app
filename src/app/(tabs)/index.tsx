@@ -3,20 +3,20 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
+import { Screen } from '@/components/Screen';
 import { CycleWheel } from '@/components/wheel/CycleWheel';
 import { Card } from '@/components/cards/Card';
+import { PeriodLogger } from '@/components/PeriodLogger';
 import { palette, phaseColors } from '@/theme/colors';
 import {
-  addCycle,
+  getOpenCycle,
   getSetting,
   listCycles,
   listMoods,
@@ -26,41 +26,57 @@ import {
   type Note,
 } from '@/lib/db';
 import { averageCycleLength, computePhase, todayISO, type PhaseInfo } from '@/lib/cycle';
-import { fetchSuggestions, type Suggestion } from '@/lib/openai';
+import type { ZodiacSign } from '@/lib/horoscope';
+import { SIGN_EMOJI } from '@/lib/horoscope';
+import { getDaily } from '@/lib/daily-cache';
+import type { DailyPayload } from '@/lib/openai';
 import { rescheduleAll } from '@/lib/notifications';
 
 export default function HomeScreen() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [openCycle, setOpenCycle] = useState<Cycle | null>(null);
   const [moods, setMoods] = useState<Mood[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [info, setInfo] = useState<PhaseInfo | null>(null);
   const [avgCycleLength, setAvgCycleLength] = useState(28);
-  const [lutealLength, setLutealLength] = useState(14);
-  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+  const [signs, setSigns] = useState<{ sun: ZodiacSign | null; moon: ZodiacSign | null; rising: ZodiacSign | null }>({
+    sun: null,
+    moon: null,
+    rising: null,
+  });
+  const [daily, setDaily] = useState<DailyPayload | null>(null);
+  const [loadingDaily, setLoadingDaily] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loggerOpen, setLoggerOpen] = useState(false);
 
   const load = useCallback(async () => {
-    const [c, m, n, avgS, lutS] = await Promise.all([
+    const [c, oc, m, n, avgS, lutS, sunS, moonS, risingS] = await Promise.all([
       listCycles(),
+      getOpenCycle(),
       listMoods(20),
       listNotes(),
       getSetting('avg_cycle_length'),
       getSetting('luteal_length'),
+      getSetting('sun_sign'),
+      getSetting('moon_sign'),
+      getSetting('rising_sign'),
     ]);
     setCycles(c);
+    setOpenCycle(oc);
     setMoods(m);
     setNotes(n);
     const fallbackAvg = Number(avgS ?? 28) || 28;
     const lLen = Number(lutS ?? 14) || 14;
     const avg = averageCycleLength(c, fallbackAvg);
     setAvgCycleLength(avg);
-    setLutealLength(lLen);
     const phaseInfo = computePhase(c, { avgCycleLength: avg, lutealLength: lLen });
     setInfo(phaseInfo);
-    if (phaseInfo) {
-      void rescheduleAll(phaseInfo);
-    }
+    setSigns({
+      sun: (sunS as ZodiacSign | null) ?? null,
+      moon: (moonS as ZodiacSign | null) ?? null,
+      rising: (risingS as ZodiacSign | null) ?? null,
+    });
+    if (phaseInfo) void rescheduleAll(phaseInfo);
   }, []);
 
   useFocusEffect(
@@ -72,29 +88,27 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!info) return;
     let cancelled = false;
-    setLoadingSuggestion(true);
-    fetchSuggestions({
+    setLoadingDaily(true);
+    getDaily({
+      date: todayISO(),
       phase: info.phase,
       dayOfCycle: info.dayOfCycle,
       cycleLength: info.cycleLength,
       recentMoods: moods.slice(0, 5).map((m) => ({ date: m.date, mood: m.mood })),
       recentNotes: notes.slice(0, 3).map((n) => ({ date: n.date, content: n.content })),
-    }).then((s) => {
+      sun: signs.sun,
+      moon: signs.moon,
+      rising: signs.rising,
+    }).then((d) => {
       if (!cancelled) {
-        setSuggestion(s);
-        setLoadingSuggestion(false);
+        setDaily(d);
+        setLoadingDaily(false);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [info?.phase, info?.dayOfCycle, moods, notes]);
-
-  const onLogPeriodStart = async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await addCycle(todayISO());
-    await load();
-  };
+  }, [info?.phase, info?.dayOfCycle, signs.sun, signs.moon, signs.rising]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -103,71 +117,109 @@ export default function HomeScreen() {
   };
 
   const current = info ? phaseColors[info.phase] : phaseColors.follicular;
+  const hasSigns = signs.sun || signs.moon || signs.rising;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: palette.cream }}
-      contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.deepRose} />}>
-      <LinearGradient
-        colors={[current.soft, palette.cream]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.6 }}
-      />
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Bloom</Text>
-        <Text style={styles.date}>{format(new Date(), 'EEEE, MMM d')}</Text>
-      </View>
+    <>
+      <Screen
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.deepRose} />}
+        contentStyle={{ paddingTop: 0 }}>
+        <LinearGradient
+          colors={[current.soft, palette.cream]}
+          style={[StyleSheet.absoluteFill, { height: 360 }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          pointerEvents="none"
+        />
+        <View style={{ paddingTop: 8 }}>
+          <Text style={styles.greeting}>Bloom</Text>
+          <Text style={styles.date}>{format(new Date(), 'EEEE, MMM d')}</Text>
+        </View>
 
-      {!info ? (
-        <Card title="Welcome \u{1F338}" subtitle="Tap below to log her first period date and we\'ll start tracking.">
-          <Pressable style={styles.primaryBtn} onPress={onLogPeriodStart}>
-            <Text style={styles.primaryBtnText}>Log period start (today)</Text>
-          </Pressable>
-        </Card>
-      ) : (
-        <>
-          <View style={styles.wheelWrap}>
-            <CycleWheel
-              size={300}
-              phase={info.phase}
-              dayOfCycle={info.dayOfCycle}
-              cycleLength={info.cycleLength}
-              progress={info.progress}
-            />
-          </View>
-
-          <View style={styles.chipsRow}>
-            <Chip label={`Next period in ${info.daysUntilNextPeriod}d`} tint={phaseColors.menstrual.soft} fg={phaseColors.menstrual.primary} />
-            <Chip
-              label={info.daysUntilOvulation >= 0 ? `Ovulation in ${info.daysUntilOvulation}d` : `Ovulated ${-info.daysUntilOvulation}d ago`}
-              tint={phaseColors.ovulation.soft}
-              fg={phaseColors.ovulation.primary}
-            />
-          </View>
-
-          <Card title={`Suggestions for ${current.label.toLowerCase()} phase`} subtitle={suggestion?.headline}>
-            {loadingSuggestion ? (
-              <ActivityIndicator color={palette.deepRose} style={{ marginVertical: 16 }} />
-            ) : (
-              (suggestion?.ideas ?? []).map((idea, i) => (
-                <View key={i} style={styles.ideaRow}>
-                  <Text style={styles.ideaBullet}>{current.emoji}</Text>
-                  <Text style={styles.ideaText}>{idea}</Text>
-                </View>
-              ))
-            )}
-          </Card>
-
-          <Card title="Quick actions">
-            <Pressable style={styles.primaryBtn} onPress={onLogPeriodStart}>
-              <Text style={styles.primaryBtnText}>Log new period start (today)</Text>
+        {!info ? (
+          <Card title="Welcome 🌸" subtitle="Tap below to log her first period date and we'll start tracking.">
+            <Pressable style={styles.primaryBtn} onPress={() => setLoggerOpen(true)}>
+              <Text style={styles.primaryBtnText}>Log her first period</Text>
             </Pressable>
           </Card>
-        </>
-      )}
-    </ScrollView>
+        ) : (
+          <>
+            <View style={styles.wheelWrap}>
+              <CycleWheel
+                size={300}
+                phase={info.phase}
+                dayOfCycle={info.dayOfCycle}
+                cycleLength={info.cycleLength}
+                progress={info.progress}
+              />
+            </View>
+
+            <View style={styles.chipsRow}>
+              {openCycle ? (
+                <Chip label="Bleeding now" tint={phaseColors.menstrual.soft} fg={phaseColors.menstrual.primary} />
+              ) : (
+                <Chip
+                  label={`Next period in ${info.daysUntilNextPeriod}d`}
+                  tint={phaseColors.menstrual.soft}
+                  fg={phaseColors.menstrual.primary}
+                />
+              )}
+              <Chip
+                label={
+                  info.daysUntilOvulation >= 0
+                    ? `Ovulation in ${info.daysUntilOvulation}d`
+                    : `Ovulated ${-info.daysUntilOvulation}d ago`
+                }
+                tint={phaseColors.ovulation.soft}
+                fg={phaseColors.ovulation.primary}
+              />
+            </View>
+
+            <Card>
+              <View style={styles.cardHeaderRow}>
+                <Text style={styles.cardLabel}>{current.emoji} Today's suggestion</Text>
+                {daily?.vibe && <Text style={styles.vibe}>{daily.vibe}</Text>}
+              </View>
+              {loadingDaily ? (
+                <ActivityIndicator color={palette.deepRose} style={{ marginVertical: 12 }} />
+              ) : (
+                <Text style={styles.suggestion}>{daily?.suggestion}</Text>
+              )}
+            </Card>
+
+            {hasSigns ? (
+              <Card>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.cardLabel}>✨ Daily horoscope</Text>
+                  <Text style={styles.signsRow}>
+                    {signs.sun ? `${SIGN_EMOJI[signs.sun]}` : ''}
+                    {signs.moon ? ` ${SIGN_EMOJI[signs.moon]}` : ''}
+                    {signs.rising ? ` ${SIGN_EMOJI[signs.rising]}` : ''}
+                  </Text>
+                </View>
+                {loadingDaily ? (
+                  <ActivityIndicator color={palette.deepRose} style={{ marginVertical: 12 }} />
+                ) : (
+                  <Text style={styles.horoscope}>{daily?.horoscope}</Text>
+                )}
+              </Card>
+            ) : (
+              <Card>
+                <Text style={styles.cardLabel}>✨ Daily horoscope</Text>
+                <Text style={styles.hint}>
+                  Add her sun, moon, and rising signs in Settings to unlock a daily reading.
+                </Text>
+              </Card>
+            )}
+
+            <Pressable style={styles.primaryBtn} onPress={() => setLoggerOpen(true)}>
+              <Text style={styles.primaryBtnText}>{openCycle ? 'Update period dates' : 'Log a period'}</Text>
+            </Pressable>
+          </>
+        )}
+      </Screen>
+      <PeriodLogger visible={loggerOpen} onClose={() => setLoggerOpen(false)} onSaved={load} />
+    </>
   );
 }
 
@@ -180,23 +232,25 @@ function Chip({ label, tint, fg }: { label: string; tint: string; fg: string }) 
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 18, gap: 16, paddingBottom: 32 },
-  header: { marginBottom: 4 },
-  greeting: { fontSize: 32, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  greeting: { fontSize: 34, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
   date: { fontSize: 14, color: palette.inkSoft, marginTop: 2 },
-  wheelWrap: { alignItems: 'center', marginVertical: 8 },
+  wheelWrap: { alignItems: 'center', marginVertical: 4 },
   chipsRow: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
   chipText: { fontSize: 13, fontWeight: '700' },
-  ideaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 6 },
-  ideaBullet: { fontSize: 16, marginTop: 2 },
-  ideaText: { flex: 1, fontSize: 15, color: palette.ink, lineHeight: 21 },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  cardLabel: { fontSize: 14, fontWeight: '700', color: palette.inkSoft, letterSpacing: 0.2 },
+  vibe: { fontSize: 12, fontWeight: '700', color: palette.deepRose, backgroundColor: palette.petalBlush, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  suggestion: { fontSize: 16, lineHeight: 23, color: palette.ink, fontWeight: '500' },
+  horoscope: { fontSize: 15, lineHeight: 22, color: palette.ink, fontStyle: 'italic' },
+  signsRow: { fontSize: 18 },
+  hint: { fontSize: 13, color: palette.inkSoft, marginTop: 8 },
   primaryBtn: {
     backgroundColor: palette.deepRose,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 15,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   primaryBtnText: { color: palette.white, fontWeight: '700', fontSize: 15 },
 });

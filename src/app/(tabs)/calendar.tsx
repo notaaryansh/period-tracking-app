@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { addMonths, format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
+import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
+import { PeriodLogger } from '@/components/PeriodLogger';
 import { palette, phaseColors } from '@/theme/colors';
 import {
-  addCycle,
   deleteCycle,
   getSetting,
   listCycles,
@@ -21,6 +21,7 @@ export default function CalendarScreen() {
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [avgCycleLength, setAvgCycleLength] = useState(28);
   const [lutealLength, setLutealLength] = useState(14);
+  const [loggerOpen, setLoggerOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [c, a, l] = await Promise.all([listCycles(), getSetting('avg_cycle_length'), getSetting('luteal_length')]);
@@ -41,14 +42,7 @@ export default function CalendarScreen() {
   const selectedCycle = selectedDateStr ? cycles.find((c) => c.start_date === selectedDateStr) : null;
   const selectedPhase = selected ? phaseForDay(selected, cycles, { avgCycleLength, lutealLength }) : null;
 
-  const onMarkPeriodStart = async () => {
-    if (!selectedDateStr) return;
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await addCycle(selectedDateStr);
-    await load();
-  };
-
-  const onRemoveCycle = async () => {
+  const onRemoveCycle = () => {
     if (!selectedCycle) return;
     Alert.alert('Remove this period start?', selectedCycle.start_date, [
       { text: 'Cancel', style: 'cancel' },
@@ -64,61 +58,57 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: palette.cream }} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Calendar</Text>
+    <>
+      <Screen>
+        <Text style={styles.title}>Calendar</Text>
 
-      <Card>
-        <CalendarGrid
-          month={month}
-          cycles={cycles}
-          avgCycleLength={avgCycleLength}
-          lutealLength={lutealLength}
-          selectedDate={selected}
-          onSelect={(d) => setSelected(d)}
-          onChangeMonth={onChangeMonth}
-        />
-      </Card>
-
-      {selected && (
-        <Card
-          title={format(selected, 'EEEE, MMM d')}
-          subtitle={selectedPhase ? `${phaseColors[selectedPhase].emoji} ${phaseColors[selectedPhase].label} phase` : 'No data yet'}>
-          {selectedCycle ? (
-            <Pressable style={[styles.btn, { backgroundColor: palette.petalBlush }]} onPress={onRemoveCycle}>
-              <Text style={[styles.btnText, { color: palette.deepRose }]}>Remove period start</Text>
-            </Pressable>
-          ) : (
-            <Pressable style={styles.btn} onPress={onMarkPeriodStart}>
-              <Text style={[styles.btnText, { color: palette.white }]}>Mark as period start</Text>
-            </Pressable>
-          )}
+        <Card>
+          <CalendarGrid
+            month={month}
+            cycles={cycles}
+            avgCycleLength={avgCycleLength}
+            lutealLength={lutealLength}
+            selectedDate={selected}
+            onSelect={(d) => setSelected(d)}
+            onChangeMonth={onChangeMonth}
+          />
         </Card>
-      )}
 
-      <Card title="Legend">
-        {(['menstrual', 'follicular', 'ovulation', 'luteal'] as const).map((p) => (
-          <View key={p} style={styles.legendRow}>
-            <View style={[styles.legendDot, { backgroundColor: phaseColors[p].soft, borderColor: phaseColors[p].primary }]} />
-            <Text style={styles.legendText}>
-              {phaseColors[p].emoji} {phaseColors[p].label}
-            </Text>
-          </View>
-        ))}
-      </Card>
-    </ScrollView>
+        {selected && (
+          <Card
+            title={format(selected, 'EEEE, MMM d')}
+            subtitle={selectedPhase ? `${phaseColors[selectedPhase].emoji} ${phaseColors[selectedPhase].label} phase` : 'No data yet'}>
+            {selectedCycle ? (
+              <Pressable style={[styles.btn, { backgroundColor: palette.petalBlush }]} onPress={onRemoveCycle}>
+                <Text style={[styles.btnText, { color: palette.deepRose }]}>Remove period start</Text>
+              </Pressable>
+            ) : (
+              <Pressable style={[styles.btn, { backgroundColor: palette.deepRose }]} onPress={() => setLoggerOpen(true)}>
+                <Text style={[styles.btnText, { color: palette.white }]}>Log a period</Text>
+              </Pressable>
+            )}
+          </Card>
+        )}
+
+        <Card title="Legend">
+          {(['menstrual', 'follicular', 'ovulation', 'luteal'] as const).map((p) => (
+            <View key={p} style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: phaseColors[p].soft, borderColor: phaseColors[p].primary }]} />
+              <Text style={styles.legendText}>
+                {phaseColors[p].emoji} {phaseColors[p].label}
+              </Text>
+            </View>
+          ))}
+        </Card>
+      </Screen>
+      <PeriodLogger visible={loggerOpen} onClose={() => setLoggerOpen(false)} onSaved={load} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 18, gap: 14, paddingBottom: 32 },
   title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
-  btn: {
-    backgroundColor: palette.deepRose,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
+  btn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   btnText: { fontWeight: '700', fontSize: 14 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   legendDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2 },

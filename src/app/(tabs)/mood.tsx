@@ -1,17 +1,9 @@
 import { useCallback, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
 import { palette, phaseColors, type PhaseKey } from '@/theme/colors';
 import { addMood, getSetting, listCycles, listMoods, type Cycle, type Mood } from '@/lib/db';
@@ -58,78 +50,70 @@ export default function MoodScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1, backgroundColor: palette.cream }} contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Mood</Text>
+    <Screen>
+      <Text style={styles.title}>Mood</Text>
 
-        <Card
-          title={phase ? `She\'s in ${current.label.toLowerCase()} phase ${current.emoji}` : 'Log a mood'}
-          subtitle="Tap how she\'s feeling today">
-          <View style={styles.chips}>
-            {choices.map((c) => {
-              const active = picked === c;
-              return (
-                <Pressable
-                  key={c}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: active ? current.primary : current.soft },
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setPicked(c);
-                  }}>
-                  <Text style={[styles.chipText, { color: active ? palette.white : palette.ink }]}>{c}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Optional note (what triggered it? context?)"
-            placeholderTextColor={palette.inkSoft}
-            value={note}
-            onChangeText={setNote}
-            multiline
-          />
-          <Pressable
-            style={[styles.saveBtn, { backgroundColor: picked ? palette.deepRose : palette.petalBlush }]}
-            disabled={!picked}
-            onPress={onSubmit}>
-            <Text style={[styles.saveBtnText, { color: picked ? palette.white : palette.deepRose }]}>
-              Save mood
-            </Text>
-          </Pressable>
-        </Card>
+      <Card
+        title={phase ? `She's in ${current.label.toLowerCase()} phase ${current.emoji}` : 'Log a mood'}
+        subtitle="Tap how she's feeling today">
+        <View style={styles.chips}>
+          {choices.map((c) => {
+            const active = picked === c;
+            return (
+              <Pressable
+                key={c}
+                style={[styles.chip, { backgroundColor: active ? current.primary : current.soft }]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setPicked(c);
+                }}>
+                <Text style={[styles.chipText, { color: active ? palette.white : palette.ink }]}>{c}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Optional note (what triggered it? context?)"
+          placeholderTextColor={palette.inkSoft}
+          value={note}
+          onChangeText={setNote}
+          multiline
+        />
+        <Pressable
+          style={[styles.saveBtn, { backgroundColor: picked ? palette.deepRose : palette.petalBlush }]}
+          disabled={!picked}
+          onPress={onSubmit}>
+          <Text style={[styles.saveBtnText, { color: picked ? palette.white : palette.deepRose }]}>Save mood</Text>
+        </Pressable>
+      </Card>
 
-        <Card title="Recent moods">
-          {moods.length === 0 ? (
-            <Text style={styles.empty}>No moods logged yet.</Text>
-          ) : (
-            moods.slice(0, 15).map((m) => {
-              const pc = (phaseColors as Record<string, (typeof phaseColors)[PhaseKey] | undefined>)[m.phase];
-              return (
-                <View key={m.id} style={styles.moodRow}>
-                  <View style={[styles.moodDot, { backgroundColor: pc?.primary ?? palette.inkSoft }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.moodPrimary}>
-                      {m.mood} <Text style={styles.moodPhase}>· {pc?.label ?? m.phase}</Text>
-                    </Text>
-                    {m.note && <Text style={styles.moodNote}>{m.note}</Text>}
-                  </View>
-                  <Text style={styles.moodDate}>{format(new Date(m.date), 'MMM d')}</Text>
+      <Card title="Recent moods">
+        {moods.length === 0 ? (
+          <Text style={styles.empty}>No moods logged yet.</Text>
+        ) : (
+          moods.slice(0, 15).map((m) => {
+            const pc = (phaseColors as Record<string, (typeof phaseColors)[PhaseKey] | undefined>)[m.phase];
+            return (
+              <View key={m.id} style={styles.moodRow}>
+                <View style={[styles.moodDot, { backgroundColor: pc?.primary ?? palette.inkSoft }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.moodPrimary}>
+                    {m.mood} <Text style={styles.moodPhase}>· {pc?.label ?? m.phase}</Text>
+                  </Text>
+                  {m.note && <Text style={styles.moodNote}>{m.note}</Text>}
                 </View>
-              );
-            })
-          )}
-        </Card>
-      </ScrollView>
-    </KeyboardAvoidingView>
+                <Text style={styles.moodDate}>{format(new Date(m.date), 'MMM d')}</Text>
+              </View>
+            );
+          })
+        )}
+      </Card>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 18, gap: 14, paddingBottom: 32 },
   title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14 },

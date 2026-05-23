@@ -35,28 +35,28 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="\u{1F338}" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon glyph="🌸" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="\u{1F4C5}" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon glyph="📅" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="mood"
         options={{
           title: 'Mood',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="\u{1F33C}" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon glyph="🌼" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="notes"
         options={{
           title: 'Notes',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="\u{1F4DD}" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon glyph="📝" focused={focused} />,
         }}
       />
       <Tabs.Screen

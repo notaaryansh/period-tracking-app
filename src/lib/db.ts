@@ -111,6 +111,19 @@ export async function deleteCycle(id: number): Promise<void> {
   await db.runAsync('DELETE FROM cycles WHERE id = ?', [id]);
 }
 
+export async function setCycleEndDate(id: number, endDate: string | null): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('UPDATE cycles SET end_date = ? WHERE id = ?', [endDate, id]);
+}
+
+export async function getOpenCycle(): Promise<Cycle | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<Cycle>(
+    'SELECT * FROM cycles WHERE end_date IS NULL ORDER BY start_date DESC LIMIT 1'
+  );
+  return row ?? null;
+}
+
 export async function listMoods(limit = 100): Promise<Mood[]> {
   const db = await getDb();
   return db.getAllAsync<Mood>('SELECT * FROM moods ORDER BY date DESC, id DESC LIMIT ?', [limit]);

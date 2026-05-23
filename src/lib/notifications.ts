@@ -1,47 +1,69 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
 import type { PhaseInfo } from './cycle';
 import { phaseColors } from '../theme/colors';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
+
+type NotificationsModule = typeof import('expo-notifications');
+let _notifs: NotificationsModule | null = null;
+function notifs(): NotificationsModule | null {
+  if (IS_EXPO_GO) return null;
+  if (_notifs) return _notifs;
+  try {
+    _notifs = require('expo-notifications') as NotificationsModule;
+    _notifs.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    return _notifs;
+  } catch {
+    return null;
+  }
+}
 
 export async function ensurePermission(): Promise<boolean> {
-  const settings = await Notifications.getPermissionsAsync();
-  if (settings.granted || settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) return true;
-  const req = await Notifications.requestPermissionsAsync({
+  const n = notifs();
+  if (!n) return false;
+  const settings = await n.getPermissionsAsync();
+  if (settings.granted || settings.ios?.status === n.IosAuthorizationStatus.PROVISIONAL) return true;
+  const req = await n.requestPermissionsAsync({
     ios: { allowAlert: true, allowBadge: false, allowSound: true },
   });
   return req.granted;
 }
 
 export async function setupAndroidChannel(): Promise<void> {
+  const n = notifs();
+  if (!n) return;
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync('bloom', {
+  await n.setNotificationChannelAsync('bloom', {
     name: 'Bloom',
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: n.AndroidImportance.DEFAULT,
     vibrationPattern: [0, 120, 60, 120],
     lightColor: '#FFB7C5',
   });
 }
 
 async function scheduleAt(date: Date, title: string, body: string, data?: Record<string, unknown>) {
+  const n = notifs();
+  if (!n) return;
   if (date.getTime() <= Date.now()) return;
-  await Notifications.scheduleNotificationAsync({
+  await n.scheduleNotificationAsync({
     content: { title, body, data: data ?? {} },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
+    trigger: { type: n.SchedulableTriggerInputTypes.DATE, date },
   });
 }
 
 export async function rescheduleAll(info: PhaseInfo): Promise<void> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  const n = notifs();
+  if (!n) return;
+  await n.cancelAllScheduledNotificationsAsync();
   const now = new Date();
 
   const periodSoon = addDays(info.nextPeriodDate, -2);
@@ -49,7 +71,7 @@ export async function rescheduleAll(info: PhaseInfo): Promise<void> {
   await scheduleAt(
     periodSoon,
     'Period in ~2 days',
-    'She\'s likely entering luteal-end. A heating pad, chocolate, or a quiet night in could mean a lot.',
+    "She's likely entering luteal-end. A heating pad, chocolate, or a quiet night in could mean a lot.",
     { kind: 'period_soon' }
   );
 
@@ -67,7 +89,7 @@ export async function rescheduleAll(info: PhaseInfo): Promise<void> {
   await scheduleAt(
     ovulation,
     'Ovulation day',
-    `${phaseColors.ovulation.emoji} She\'s likely peaking — confident, social, flirty energy. Make plans tonight.`,
+    `${phaseColors.ovulation.emoji} She's likely peaking — confident, social, flirty energy. Make plans tonight.`,
     { kind: 'ovulation' }
   );
 

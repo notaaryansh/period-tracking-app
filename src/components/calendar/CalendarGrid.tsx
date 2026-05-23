@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import {
+  Canvas,
+  Circle,
+  RadialGradient,
+  vec,
+  BlurMask,
+} from '@shopify/react-native-skia';
+import {
   addMonths,
   endOfMonth,
   format,
@@ -24,6 +31,24 @@ type Props = {
 };
 
 const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const CELL = 44;
+const DOT = 38;
+
+function GradientDot({ phase, focused }: { phase: PhaseKey; focused?: boolean }) {
+  const c = phaseColors[phase];
+  return (
+    <Canvas style={{ width: DOT, height: DOT, position: 'absolute' }}>
+      <Circle cx={DOT / 2} cy={DOT / 2} r={DOT / 2}>
+        <RadialGradient
+          c={vec(DOT / 2, DOT / 2)}
+          r={DOT / 2}
+          colors={[c.primary, c.soft, 'rgba(255,255,255,0)']}
+        />
+        {focused && <BlurMask blur={1.5} style="solid" />}
+      </Circle>
+    </Canvas>
+  );
+}
 
 export function CalendarGrid({
   month,
@@ -64,11 +89,11 @@ export function CalendarGrid({
   return (
     <View>
       <View style={styles.header}>
-        <Pressable onPress={() => onChangeMonth?.(-1)} hitSlop={12}>
+        <Pressable onPress={() => onChangeMonth?.(-1)} hitSlop={12} style={styles.navHit}>
           <Text style={styles.nav}>‹</Text>
         </Pressable>
         <Text style={styles.monthLabel}>{format(month, 'MMMM yyyy')}</Text>
-        <Pressable onPress={() => onChangeMonth?.(1)} hitSlop={12}>
+        <Pressable onPress={() => onChangeMonth?.(1)} hitSlop={12} style={styles.navHit}>
           <Text style={styles.nav}>›</Text>
         </Pressable>
       </View>
@@ -89,20 +114,20 @@ export function CalendarGrid({
             : phaseForDay(d, cycles, { avgCycleLength, lutealLength });
           const isToday = isSameDay(d, today);
           const isSelected = selectedDate && isSameDay(d, selectedDate);
-          const bg = phase ? phaseColors[phase].soft : 'transparent';
-          const accent = phase ? phaseColors[phase].primary : palette.inkSoft;
+          const textColor = phase ? phaseColors[phase].primary : palette.inkSoft;
           return (
             <Pressable key={i} style={styles.cell} onPress={() => onSelect?.(d)}>
+              {phase && <GradientDot phase={phase} focused={isPeriod} />}
               <View
                 style={[
                   styles.dot,
-                  { backgroundColor: bg },
                   isSelected && { borderWidth: 2, borderColor: palette.deepRose },
-                  isToday && { borderWidth: 2, borderColor: palette.ink },
+                  isToday && !isSelected && { borderWidth: 1.5, borderColor: palette.ink },
                 ]}>
-                <Text style={[styles.dayText, { color: accent }]}>{d.getDate()}</Text>
+                <Text style={[styles.dayText, { color: textColor, fontWeight: isPeriod ? '800' : '600' }]}>
+                  {d.getDate()}
+                </Text>
               </View>
-              {isPeriod && <View style={styles.periodDot} />}
             </Pressable>
           );
         })}
@@ -111,28 +136,26 @@ export function CalendarGrid({
   );
 }
 
-function addMonthsToDate(date: Date, n: number): Date {
+export function addMonthsToDate(date: Date, n: number): Date {
   return addMonths(date, n);
 }
 
-const CELL = 44;
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   monthLabel: { fontSize: 18, fontWeight: '700', color: palette.ink },
-  nav: { fontSize: 28, color: palette.deepRose, paddingHorizontal: 12 },
+  navHit: { paddingHorizontal: 8, paddingVertical: 4 },
+  nav: { fontSize: 28, color: palette.deepRose, lineHeight: 30 },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   weekday: { width: CELL, textAlign: 'center', fontSize: 12, fontWeight: '600', color: palette.inkSoft },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: CELL, height: CELL, alignItems: 'center', justifyContent: 'center' },
   dot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: DOT,
+    height: DOT,
+    borderRadius: DOT / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  dayText: { fontSize: 14, fontWeight: '600' },
-  periodDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: palette.deepRose, marginTop: 2 },
+  dayText: { fontSize: 14 },
 });
-
-export { addMonthsToDate };

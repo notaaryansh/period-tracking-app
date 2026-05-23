@@ -1,24 +1,16 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import {
   Canvas,
   Circle,
-  Group,
   Path,
   Skia,
-  SweepGradient,
+  RadialGradient,
   vec,
   BlurMask,
   Shadow,
-  Paint,
 } from '@shopify/react-native-skia';
-import Animated, {
-  useSharedValue,
-  useDerivedValue,
-  withTiming,
-  withRepeat,
-  Easing,
-} from 'react-native-reanimated';
+import { useSharedValue, useDerivedValue, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { palette, phaseColors, type PhaseKey } from '@/theme/colors';
 
 type Props = {
@@ -36,103 +28,82 @@ const SECTORS: { phase: PhaseKey; weight: number }[] = [
   { phase: 'luteal', weight: 11 },
 ];
 
-function arcPath(cx: number, cy: number, r: number, startRad: number, endRad: number, thickness: number) {
-  const p = Skia.Path.Make();
-  const outerStart = { x: cx + r * Math.cos(startRad), y: cy + r * Math.sin(startRad) };
-  const innerR = r - thickness;
-  p.moveTo(outerStart.x, outerStart.y);
-  p.addArc(
-    { x: cx - r, y: cy - r, width: r * 2, height: r * 2 },
-    (startRad * 180) / Math.PI,
-    ((endRad - startRad) * 180) / Math.PI
+function ringArc(cx: number, cy: number, r: number, start: number, end: number, thickness: number) {
+  const inner = r - thickness;
+  const path = Skia.Path.Make();
+  const startDeg = (start * 180) / Math.PI;
+  const sweepDeg = ((end - start) * 180) / Math.PI;
+  path.addArc({ x: cx - r, y: cy - r, width: r * 2, height: r * 2 }, startDeg, sweepDeg);
+  const innerEndX = cx + inner * Math.cos(end);
+  const innerEndY = cy + inner * Math.sin(end);
+  path.lineTo(innerEndX, innerEndY);
+  path.addArc(
+    { x: cx - inner, y: cy - inner, width: inner * 2, height: inner * 2 },
+    startDeg + sweepDeg,
+    -sweepDeg
   );
-  const innerEnd = { x: cx + innerR * Math.cos(endRad), y: cy + innerR * Math.sin(endRad) };
-  p.lineTo(innerEnd.x, innerEnd.y);
-  p.addArc(
-    { x: cx - innerR, y: cy - innerR, width: innerR * 2, height: innerR * 2 },
-    (endRad * 180) / Math.PI,
-    -((endRad - startRad) * 180) / Math.PI
-  );
-  p.close();
-  return p;
+  path.close();
+  return path;
 }
 
 export function CycleWheel({ size, phase, dayOfCycle, cycleLength, progress }: Props) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = size / 2 - 14;
-  const thickness = size * 0.16;
-
+  const r = size / 2 - 18;
+  const thickness = size * 0.13;
   const totalWeight = SECTORS.reduce((s, x) => s + x.weight, 0);
-  const sectors = useMemo(() => {
-    let acc = -Math.PI / 2;
-    return SECTORS.map(({ phase: p, weight }) => {
-      const start = acc;
-      const end = acc + (weight / totalWeight) * Math.PI * 2;
-      acc = end;
-      return { phase: p, start, end };
-    });
-  }, [totalWeight]);
 
-  const pulse = useSharedValue(0);
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.quad) }),
-      -1,
-      true
-    );
-  }, [pulse]);
-
-  const glowRadius = useDerivedValue(() => 18 + pulse.value * 14, [pulse]);
+  let acc = -Math.PI / 2;
+  const sectors = SECTORS.map(({ phase: p, weight }) => {
+    const start = acc;
+    const end = acc + (weight / totalWeight) * Math.PI * 2;
+    acc = end;
+    return { phase: p, start, end };
+  });
 
   const indicatorAngle = -Math.PI / 2 + Math.min(1, Math.max(0, progress)) * Math.PI * 2;
   const ix = cx + (r - thickness / 2) * Math.cos(indicatorAngle);
   const iy = cy + (r - thickness / 2) * Math.sin(indicatorAngle);
+
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    pulse.value = withRepeat(withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.quad) }), -1, true);
+  }, [pulse]);
+  const glowR = useDerivedValue(() => 14 + pulse.value * 14, [pulse]);
+  const haloR = useDerivedValue(() => 26 + pulse.value * 22, [pulse]);
 
   const current = phaseColors[phase];
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
-        <Group>
-          <Circle cx={cx} cy={cy} r={r + 4} color={palette.white}>
-            <Shadow dx={0} dy={6} blur={18} color={palette.shadow} />
-          </Circle>
-        </Group>
-        {sectors.map((s) => (
-          <Path
-            key={s.phase}
-            path={arcPath(cx, cy, r, s.start, s.end, thickness)}
-            color={phaseColors[s.phase].soft}>
-            {phase === s.phase && <BlurMask blur={0.5} style="solid" />}
-          </Path>
-        ))}
-        {sectors
-          .filter((s) => s.phase === phase)
-          .map((s) => (
+        {sectors.map((s) => {
+          const isActive = s.phase === phase;
+          return (
             <Path
-              key={`active-${s.phase}`}
-              path={arcPath(cx, cy, r, s.start, s.end, thickness)}>
-              <Paint>
-                <SweepGradient
-                  c={vec(cx, cy)}
-                  colors={[
-                    phaseColors[s.phase].primary,
-                    phaseColors[s.phase].soft,
-                    phaseColors[s.phase].primary,
-                  ]}
-                />
-              </Paint>
-              <BlurMask blur={2} style="solid" />
+              key={s.phase}
+              path={ringArc(cx, cy, r, s.start, s.end, thickness)}
+              color={isActive ? phaseColors[s.phase].primary : phaseColors[s.phase].soft}
+              opacity={isActive ? 1 : 0.85}>
+              {isActive && <BlurMask blur={1.2} style="solid" />}
             </Path>
-          ))}
-        <Circle cx={ix} cy={iy} r={glowRadius} color={current.glow}>
-          <BlurMask blur={18} style="normal" />
+          );
+        })}
+
+        <Circle cx={ix} cy={iy} r={haloR} opacity={0.5}>
+          <RadialGradient c={vec(ix, iy)} r={48} colors={[current.glow, 'rgba(255,255,255,0)']} />
+          <BlurMask blur={20} style="normal" />
         </Circle>
-        <Circle cx={ix} cy={iy} r={10} color={palette.white} />
+        <Circle cx={ix} cy={iy} r={glowR} color={current.glow}>
+          <BlurMask blur={12} style="normal" />
+        </Circle>
+        <Circle cx={ix} cy={iy} r={11} color={palette.white}>
+          <Shadow dx={0} dy={2} blur={6} color={palette.shadow} />
+        </Circle>
         <Circle cx={ix} cy={iy} r={6} color={current.primary} />
-        <Circle cx={cx} cy={cy} r={r - thickness - 8} color={palette.cream}>
-          <Shadow dx={0} dy={2} blur={10} color={palette.shadow} inner />
+
+        <Circle cx={cx} cy={cy} r={r - thickness - 6}>
+          <RadialGradient c={vec(cx, cy)} r={r - thickness - 6} colors={[palette.white, current.soft]} />
         </Circle>
       </Canvas>
       <View style={[StyleSheet.absoluteFill, styles.centerLabel]} pointerEvents="none">
@@ -147,8 +118,8 @@ export function CycleWheel({ size, phase, dayOfCycle, cycleLength, progress }: P
 
 const styles = StyleSheet.create({
   centerLabel: { alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 36, marginBottom: 4 },
-  dayBig: { fontSize: 34, fontWeight: '700', color: palette.ink, letterSpacing: -0.5 },
-  phaseLabel: { fontSize: 18, fontWeight: '600', color: palette.deepRose, marginTop: 2 },
+  emoji: { fontSize: 34, marginBottom: 4 },
+  dayBig: { fontSize: 36, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  phaseLabel: { fontSize: 17, fontWeight: '600', color: palette.deepRose, marginTop: 2 },
   subtle: { fontSize: 13, color: palette.inkSoft, marginTop: 2 },
 });
