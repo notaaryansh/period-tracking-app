@@ -25,7 +25,7 @@ export function Screen({
   const Body = scroll ? (
     <ScrollView
       style={{ flex: 1, backgroundColor }}
-      contentContainerStyle={[{ paddingTop, paddingBottom: 32, paddingHorizontal: 18, gap: 14 }, contentStyle]}
+      contentContainerStyle={[{ paddingTop, paddingBottom: 120, paddingHorizontal: 18, gap: 14 }, contentStyle]}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled">
       {children}
