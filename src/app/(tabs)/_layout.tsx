@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Platform, Text, useWindowDimensions } from 'react-native';
+import { Platform, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '@/theme/colors';
 
@@ -7,15 +7,17 @@ const SCREEN_PADDING = 18;
 
 function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
   return (
-    <Text
-      style={{
-        fontSize: focused ? 22 : 18,
-        opacity: focused ? 1 : 0.6,
-        lineHeight: 24,
-        textAlign: 'center',
-      }}>
-      {glyph}
-    </Text>
+    <View style={{ width: 28, height: 26, alignItems: 'center', justifyContent: 'center' }}>
+      <Text
+        style={{
+          fontSize: 20,
+          lineHeight: 22,
+          opacity: focused ? 1 : 0.55,
+          transform: [{ scale: focused ? 1.12 : 1 }],
+        }}>
+        {glyph}
+      </Text>
+    </View>
   );
 }
 
@@ -32,8 +34,8 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: palette.deepRose,
         tabBarInactiveTintColor: palette.inkSoft,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 2 },
-        tabBarItemStyle: { justifyContent: 'center', alignItems: 'center', paddingVertical: 0, height: 62 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 3, marginBottom: 0, lineHeight: 12 },
+        tabBarItemStyle: { justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 10 },
         tabBarStyle: {
           position: 'absolute',
           left: barLeft,
