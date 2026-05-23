@@ -15,6 +15,7 @@ import { CycleWheel } from '@/components/wheel/CycleWheel';
 import { Card } from '@/components/cards/Card';
 import { PeriodLogger } from '@/components/PeriodLogger';
 import { palette, phaseColors } from '@/theme/colors';
+import { font } from '@/theme/font';
 import {
   getOpenCycle,
   getSetting,
@@ -250,17 +251,17 @@ function Chip({ label, tint, fg }: { label: string; tint: string; fg: string }) 
 }
 
 const styles = StyleSheet.create({
-  dayLabel: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
-  dateLabel: { fontSize: 15, color: palette.inkSoft, marginTop: 2, fontWeight: '500' },
+  dayLabel: { fontSize: 32, fontFamily: font.extrabold, color: palette.ink, letterSpacing: -0.8 },
+  dateLabel: { fontSize: 15, color: palette.inkSoft, marginTop: 2, fontFamily: font.medium },
   wheelWrap: { alignItems: 'center', marginVertical: 4 },
   chipsRow: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
-  chipText: { fontSize: 13, fontWeight: '700' },
+  chipText: { fontSize: 13, fontFamily: font.bold },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  cardLabel: { fontSize: 14, fontWeight: '700', color: palette.inkSoft, letterSpacing: 0.2 },
-  vibe: { fontSize: 12, fontWeight: '700', color: palette.deepRose, backgroundColor: palette.petalBlush, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  suggestion: { fontSize: 16, lineHeight: 23, color: palette.ink, fontWeight: '500' },
-  horoscope: { fontSize: 15, lineHeight: 22, color: palette.ink, fontStyle: 'italic' },
+  cardLabel: { fontSize: 14, fontFamily: font.bold, color: palette.inkSoft, letterSpacing: 0.2 },
+  vibe: { fontSize: 12, fontFamily: font.bold, color: palette.deepRose, backgroundColor: palette.petalBlush, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  suggestion: { fontSize: 16, lineHeight: 23, color: palette.ink, fontFamily: font.medium },
+  horoscope: { fontSize: 15, lineHeight: 22, color: palette.ink, fontFamily: font.italic },
   signsRow: { fontSize: 18 },
   hint: { fontSize: 13, color: palette.inkSoft, marginTop: 8 },
   primaryBtn: {
@@ -270,5 +271,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 6,
   },
-  primaryBtnText: { color: palette.white, fontWeight: '700', fontSize: 15 },
+  primaryBtnText: { color: palette.white, fontFamily: font.bold, fontSize: 15 },
 });

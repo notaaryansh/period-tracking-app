@@ -1,5 +1,6 @@
 import { View, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { palette } from '@/theme/colors';
+import { font } from '@/theme/font';
 
 type Props = {
   title?: string;
@@ -30,6 +31,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
-  title: { fontSize: 16, fontWeight: '700', color: palette.ink, marginBottom: 2 },
-  subtitle: { fontSize: 13, color: palette.inkSoft, marginBottom: 10 },
+  title: { fontSize: 17, fontFamily: font.bold, color: palette.ink, marginBottom: 2 },
+  subtitle: { fontSize: 13, color: palette.inkSoft, marginBottom: 10, fontFamily: font.italic },
 });

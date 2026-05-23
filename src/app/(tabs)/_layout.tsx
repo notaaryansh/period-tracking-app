@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { palette } from '@/theme/colors';
+import { font } from '@/theme/font';
 
 const SCREEN_PADDING = 18;
 const BAR_HEIGHT = 64;
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: font.bold,
     lineHeight: 12,
   },
 });

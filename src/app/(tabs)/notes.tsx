@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
 import { palette } from '@/theme/colors';
+import { font } from '@/theme/font';
 import { addNote, deleteNote, listNotes, updateNote, type Note } from '@/lib/db';
 import { todayISO } from '@/lib/cycle';
 
@@ -129,7 +130,7 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  title: { fontSize: 30, fontFamily: font.extrabold, color: palette.ink, letterSpacing: -0.7 },
   input: {
     borderRadius: 12,
     backgroundColor: palette.cream,
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', gap: 8, marginTop: 4 },
   btn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
-  btnText: { fontWeight: '700', fontSize: 14 },
+  btnText: { fontFamily: font.bold, fontSize: 14 },
   empty: { color: palette.inkSoft, fontSize: 14, fontStyle: 'italic' },
   noteRow: { paddingVertical: 10, borderBottomColor: palette.petalBlush, borderBottomWidth: StyleSheet.hairlineWidth },
   noteContent: { fontSize: 15, color: palette.ink, lineHeight: 21 },

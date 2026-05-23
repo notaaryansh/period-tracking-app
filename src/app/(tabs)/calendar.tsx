@@ -7,6 +7,7 @@ import { Card } from '@/components/cards/Card';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { PeriodLogger } from '@/components/PeriodLogger';
 import { palette, phaseColors } from '@/theme/colors';
+import { font } from '@/theme/font';
 import {
   deleteCycle,
   getSetting,
@@ -107,9 +108,9 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  title: { fontSize: 30, fontFamily: font.extrabold, color: palette.ink, letterSpacing: -0.7 },
   btn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 8 },
-  btnText: { fontWeight: '700', fontSize: 14 },
+  btnText: { fontFamily: font.bold, fontSize: 14 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   legendDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2 },
   legendText: { fontSize: 14, color: palette.ink },

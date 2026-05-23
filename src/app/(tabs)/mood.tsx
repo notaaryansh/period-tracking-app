@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
 import { palette, phaseColors, type PhaseKey } from '@/theme/colors';
+import { font } from '@/theme/font';
 import { addMood, getSetting, listCycles, listMoods, type Cycle, type Mood } from '@/lib/db';
 import { averageCycleLength, computePhase, moodChoices, todayISO } from '@/lib/cycle';
 
@@ -114,10 +115,10 @@ export default function MoodScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '800', color: palette.ink, letterSpacing: -0.5 },
+  title: { fontSize: 30, fontFamily: font.extrabold, color: palette.ink, letterSpacing: -0.7 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14 },
-  chipText: { fontWeight: '600', fontSize: 14 },
+  chipText: { fontFamily: font.semibold, fontSize: 14 },
   input: {
     borderRadius: 12,
     backgroundColor: palette.cream,
@@ -128,12 +129,12 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   saveBtn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 10 },
-  saveBtnText: { fontWeight: '700', fontSize: 15 },
+  saveBtnText: { fontFamily: font.bold, fontSize: 15 },
   empty: { color: palette.inkSoft, fontSize: 14, fontStyle: 'italic' },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   moodDot: { width: 10, height: 10, borderRadius: 5 },
-  moodPrimary: { fontSize: 15, fontWeight: '600', color: palette.ink },
-  moodPhase: { fontSize: 13, color: palette.inkSoft, fontWeight: '400' },
+  moodPrimary: { fontSize: 15, fontFamily: font.semibold, color: palette.ink },
+  moodPhase: { fontSize: 13, color: palette.inkSoft, fontFamily: font.regular },
   moodNote: { fontSize: 13, color: palette.inkSoft, marginTop: 2 },
   moodDate: { fontSize: 12, color: palette.inkSoft },
 });
