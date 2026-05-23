@@ -1,55 +1,76 @@
-# Bloom — Period Tracking App
+# 🌸 Bloom
 
-A personal, local-first period tracker built with Expo + SQLite. Tracks cycles, predicts upcoming phases, logs moods, captures notes, and uses OpenAI to surface gentle suggestions on how to support her through each phase.
+A small, local-first period tracker I built for my girlfriend. No accounts, no cloud, no analytics — just a soft, calm space to track her cycle, log moods, write little notes, and get a gentle daily suggestion + horoscope.
 
-- Local SQLite storage (no server, no auth)
-- Cycle phase math (menstrual / follicular / ovulation / luteal)
-- Skia-powered cycle wheel with glowing phase indicator
-- Calendar grid with phase-colored days
-- Mood logging with phase-aware choices
-- Notes with tags
-- Proactive local notifications (period soon, ovulation day, mood check-ins, phase transitions)
-- AI suggestions via `gpt-5-mini`
+<p align="center">
+  <img src="assets/screenshots/home.png" alt="Bloom home screen" width="320" />
+</p>
 
-## Setup
+## ✨ What it does
+
+- **Cycle tracking** — log period start/end dates with a date picker. Adjusts the predicted cycle length based on her actual history.
+- **Phase visualization** — animated cycle wheel showing menstrual, follicular, ovulation, and luteal phases with a glowing indicator for today.
+- **Calendar** — month grid with phase-coloured days, so you can see at a glance where she is in her cycle.
+- **Mood logger** — phase-aware multiple-choice prompts ("Crampy" / "Tender" during menstrual, "Glowing" / "Magnetic" during ovulation, etc.) with optional notes.
+- **Notes** — quick free-form notes with tags for things you want to remember (gift ideas, things she's mentioned, patterns you've noticed).
+- **Daily AI suggestion + horoscope** — one warm, specific suggestion per day for how to support her based on her current phase + recent moods, plus a daily reading blended from her sun, moon, and rising signs. Powered by OpenAI's `gpt-4o-mini`.
+- **Proactive nudges** — local notifications for "period in 2 days", "ovulation today", phase transitions, and gentle mood check-ins (only in standalone builds — Expo Go limits notifications).
+
+## 🔒 Privacy & data
+
+**All data lives locally on your device** in a SQLite database (`bloom.db`). It never leaves the phone.
+
+- No backend, no API server, no analytics.
+- No login, no account.
+- The only network call is to OpenAI's API for daily suggestions, and only if you've added an `OPENAI_API_KEY` — without it the app falls back to canned evergreen suggestions.
+- Uninstall the app and every byte of her data goes with it.
+
+## 🛠 Built with
+
+- [Expo](https://expo.dev) (SDK 54)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
+- [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) — local storage
+- [@shopify/react-native-skia](https://shopify.github.io/react-native-skia/) — GPU-accelerated cycle wheel
+- [react-native-reanimated](https://docs.swmansion.com/react-native-reanimated/) — UI-thread animations
+- [date-fns](https://date-fns.org) — date math
+- OpenAI Chat Completions API
+
+## 📱 Run it on your phone
+
+### Prerequisites
+
+- Node.js 20+ (or 22+, 24+)
+- An Android or iOS phone with [Expo Go](https://expo.dev/go) installed
+- (Optional) An OpenAI API key for AI suggestions
+
+### Setup
 
 ```bash
-npm install
+git clone https://github.com/notaaryansh/period-tracking-app.git
+cd period-tracking-app
+npm install --legacy-peer-deps
 ```
 
-Create a `.env` file in the project root:
+Create a `.env` in the project root (optional — without it the app falls back to canned suggestions):
 
-```
+```bash
 OPENAI_API_KEY=sk-...
 ```
 
-## Run (development)
+### Start the dev server
 
 ```bash
 npx expo start
 ```
 
-Then either:
-- iOS — scan the QR code with the **Camera** app on your iPhone (opens Expo Go).
-- Android — scan the QR code from inside the **Expo Go** app (Play Store).
-- Simulator/emulator — press `i` for iOS, `a` for Android in the terminal.
+Then on your phone:
 
-> Note: this app uses `@shopify/react-native-skia` and `expo-notifications`, which are bundled with Expo SDK 56 — Expo Go should work. If you hit a missing-native-module error, build a development client (next section).
+- **Android** → open Expo Go → "Scan QR code" → point at the QR in the terminal
+- **iOS** → open the Camera app → point at the QR → tap the Expo Go banner
 
-## Development build (custom dev client)
+Same WiFi required. If LAN is flaky, use `npx expo start --tunnel`.
 
-```bash
-npm install -g eas-cli
-eas login
-eas build --profile development --platform android
-# or: eas build --profile development --platform ios
-```
-
-Install the resulting build on your device, then run `npx expo start --dev-client` and scan the QR.
-
-## Standalone install on your phone (no Expo Go)
-
-### Android — easiest, free
+### Build a standalone APK (no Expo Go required)
 
 ```bash
 npm install -g eas-cli
@@ -57,45 +78,25 @@ eas login
 eas build --profile preview --platform android
 ```
 
-This produces an **APK** download link. Transfer the APK to your phone, allow "install from unknown sources", install. Done.
+You'll get a link to an `.apk` you can install on your phone directly. iOS standalone builds need an Apple Developer account ($99/yr).
 
-### iOS — requires Apple Developer Program ($99/yr)
+## 🗺 Roadmap
 
-Apple doesn't let you sideload arbitrary apps. Options:
+These are things I might add later (or you might, if you fork it). Not promises.
 
-1. **Apple Developer Program ($99/yr)** + `eas build --profile preview --platform ios` → install via ad-hoc provisioning on your registered device.
-2. **TestFlight** (same $99/yr) — same build, easier install flow.
-3. **AltStore / Sideloadly** (free) — sideload via your free Apple ID; expires every 7 days.
+- [ ] **Better horoscope** — more nuanced daily readings, transit awareness, possibly a small "compatibility with you" view if you add your own signs.
+- [ ] **Cloud backup (device-only)** — opt-in encrypted backup to her own iCloud / Google Drive folder so a lost phone doesn't lose her data. **Still no third-party server.**
+- [ ] **Downloadable release** — pre-built APK + TestFlight builds so non-developers can install it without running the dev server. Would ship in two flavours: one with OpenAI integration (bring-your-own-key) and one fully offline.
+- [ ] **Symptoms tracking** — flow intensity, cramps, sleep, skin, etc.
+- [ ] **Smart insights** — "her mood tends to dip 2 days before her period" type observations from her own logged data.
+- [ ] **Themes** — light variants and maybe a dark mode for night-time logging.
 
-For an iPhone-only personal app the cleanest path is option 1.
+**Not on the roadmap (probably ever):** accounts, auth, a backend. I built this just for one person and the whole point is that it stays local. If you fork it for wider use, those are yours to add.
 
-## Project structure
+## 🌷 Contributing
 
-```
-src/
-  app/
-    _layout.tsx              # root stack + init (DB, notifications)
-    (tabs)/
-      _layout.tsx            # tab bar
-      index.tsx              # Today — cycle wheel + suggestions
-      calendar.tsx           # month grid
-      mood.tsx               # mood logger
-      notes.tsx              # notes CRUD
-      settings.tsx           # cycle settings + data wipe
-  components/
-    wheel/CycleWheel.tsx     # Skia circular phase wheel
-    calendar/CalendarGrid.tsx
-    cards/Card.tsx
-  lib/
-    db.ts                    # SQLite schema + queries
-    cycle.ts                 # phase math + mood choices
-    openai.ts                # gpt-5-mini suggestions
-    notifications.ts         # local notification scheduling
-  theme/
-    colors.ts                # sakura palette + per-phase colors
-```
+This was a personal project for my girlfriend, so I'm not actively soliciting contributions — but the code is yours under MIT. Fork it, build something for your own person, share what you make.
 
-## Notes
+## License
 
-- All data lives in `bloom.db` on the device. Uninstalling the app erases everything.
-- The OpenAI key is bundled into the app at build time. Don't share the build outside your own devices.
+MIT — see [LICENSE](LICENSE).
