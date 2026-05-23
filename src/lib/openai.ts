@@ -58,9 +58,10 @@ export type DailyPayload = {
   suggestion: string;
   horoscope: string;
   vibe: string;
+  ok: boolean;
 };
 
-const FALLBACK: DailyPayload = {
+const FALLBACK: Omit<DailyPayload, 'ok'> = {
   suggestion: "Send a soft 'thinking of you' text and pick up something small she loves on the way home.",
   horoscope: 'Quiet planets today — small acts of care will land bigger than grand ones.',
   vibe: 'Gentle',
@@ -69,7 +70,7 @@ const FALLBACK: DailyPayload = {
 export async function fetchDaily(input: DailyInput): Promise<DailyPayload> {
   const key = getApiKey();
   if (!key) {
-    return { ...FALLBACK, vibe: 'Set OPENAI_API_KEY' };
+    return { ...FALLBACK, vibe: 'Set OPENAI_API_KEY', ok: false };
   }
 
   const system = [
@@ -114,7 +115,7 @@ export async function fetchDaily(input: DailyInput): Promise<DailyPayload> {
       const text = await res.text();
       const snippet = text.slice(0, 140);
       if (__DEV__) console.warn('[openai] non-OK', res.status, snippet);
-      return { ...FALLBACK, vibe: `API ${res.status}` };
+      return { ...FALLBACK, vibe: `API ${res.status}`, ok: false };
     }
     const data = await res.json();
     const content: string = data.choices?.[0]?.message?.content ?? '{}';
@@ -123,9 +124,10 @@ export async function fetchDaily(input: DailyInput): Promise<DailyPayload> {
       suggestion: typeof parsed.suggestion === 'string' ? parsed.suggestion : FALLBACK.suggestion,
       horoscope: typeof parsed.horoscope === 'string' ? parsed.horoscope : FALLBACK.horoscope,
       vibe: typeof parsed.vibe === 'string' ? parsed.vibe : FALLBACK.vibe,
+      ok: true,
     };
   } catch (err) {
     if (__DEV__) console.warn('[openai] fetch failed', err);
-    return { ...FALLBACK, vibe: 'Offline' };
+    return { ...FALLBACK, vibe: 'Offline', ok: false };
   }
 }

@@ -9,6 +9,7 @@ import { getDb, getSetting, listCycles, setSetting } from '@/lib/db';
 import { averageCycleLength } from '@/lib/cycle';
 import { ZODIAC_SIGNS, SIGN_EMOJI, type ZodiacSign } from '@/lib/horoscope';
 import { debugKeyInfo, testApiKey } from '@/lib/openai';
+import { clearDailyCache } from '@/lib/daily-cache';
 
 type SignSlot = 'sun' | 'moon' | 'rising';
 
@@ -174,6 +175,15 @@ export default function SettingsScreen() {
             Alert.alert(r.ok ? '✅ OpenAI works' : `❌ Status ${r.status || 'error'}`, r.message);
           }}>
           <Text style={styles.saveBtnText}>Test OpenAI</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.saveBtn, { backgroundColor: palette.petalBlush, marginTop: 8 }]}
+          onPress={async () => {
+            await clearDailyCache();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Cleared', 'Daily AI cache wiped. Pull-to-refresh on Today to fetch fresh.');
+          }}>
+          <Text style={[styles.saveBtnText, { color: palette.deepRose }]}>Clear AI cache</Text>
         </Pressable>
       </Card>
 
