@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { addMonths, format } from 'date-fns';
+import { format } from 'date-fns';
 import { Screen } from '@/components/Screen';
 import { Card } from '@/components/cards/Card';
-import { CalendarGrid } from '@/components/calendar/CalendarGrid';
+import { MonthCarousel } from '@/components/calendar/MonthCarousel';
 import { PeriodLogger } from '@/components/PeriodLogger';
 import { palette, phaseColors } from '@/theme/colors';
 import {
@@ -16,7 +16,6 @@ import {
 import { averageCycleLength, phaseForDay } from '@/lib/cycle';
 
 export default function CalendarScreen() {
-  const [month, setMonth] = useState(new Date());
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [selected, setSelected] = useState<Date | undefined>(new Date());
   const [avgCycleLength, setAvgCycleLength] = useState(28);
@@ -35,8 +34,6 @@ export default function CalendarScreen() {
       void load();
     }, [load])
   );
-
-  const onChangeMonth = (delta: number) => setMonth((m) => addMonths(m, delta));
 
   const selectedDateStr = selected ? format(selected, 'yyyy-MM-dd') : null;
   const selectedCycle = selectedDateStr ? cycles.find((c) => c.start_date === selectedDateStr) : null;
@@ -63,14 +60,12 @@ export default function CalendarScreen() {
         <Text style={styles.title}>Calendar</Text>
 
         <Card>
-          <CalendarGrid
-            month={month}
+          <MonthCarousel
             cycles={cycles}
             avgCycleLength={avgCycleLength}
             lutealLength={lutealLength}
             selectedDate={selected}
             onSelect={(d) => setSelected(d)}
-            onChangeMonth={onChangeMonth}
           />
         </Card>
 
